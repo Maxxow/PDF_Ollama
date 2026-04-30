@@ -1,0 +1,37 @@
+# Entornos Virtuales
+venv/
+env/
+.env/
+.venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Archivos de caché y compilados de Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Directorios del sistema de la aplicación
+uploads/
+mongo_data/
+
+# Variables de entorno
+.env
+.env.local
+.env.development
+
+# Editores e IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Archivos de sistema operativo
+Thumbs.db
