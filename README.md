@@ -1,84 +1,94 @@
 # Cluster Doc AI - Sistema Distribuido de Procesamiento de Documentos
 
-Este proyecto es una plataforma distribuida diseñada para procesar, analizar y clasificar documentos PDF utilizando Modelos de Lenguaje Grande (LLMs) ejecutados localmente con **Ollama**. Fue creado como un sistema distribuido donde diferentes "máquinas" (nodos) interactúan en cascada para repartir la carga computacional.
+Este proyecto es una plataforma distribuida diseñada para procesar, analizar y clasificar documentos PDF utilizando Modelos de Lenguaje Grande (LLMs) ejecutados localmente con **Ollama**. El sistema consta de **4 máquinas en total** para repartir la carga computacional, permitiendo que la IA se ejecute de manera eficiente.
 
-## 🏗 Arquitectura del Sistema
+## 🏗 Arquitectura de las 4 Máquinas
 
-El sistema está dividido en 4 nodos (microservicios):
+Para asegurar la mayor eficiencia, **la Base de Datos se almacena en el Servidor Principal (Frontend)**. Esto libera la memoria RAM y procesador de las Máquinas 1, 2 y 3 para que se dediquen exclusivamente a correr los modelos pesados de Inteligencia Artificial.
 
-1. **Frontend / Gateway (Puerto 8000)**
-   - Interfaz web moderna (Glassmorphism).
-   - Control de autenticación de usuarios (JWT). Existen 2 roles: **Subidor** (máx. 10 usuarios) y **Visualizador** (ilimitado).
-   - Recibe el PDF, lo guarda y notifica a la Máquina 1.
-   
-2. **Máquina 1: El Lector Profundo (Puerto 8001)**
-   - Extrae el texto del PDF utilizando PyMuPDF.
-   - Utiliza el modelo `llama3.1:8b` para limpiar la estructura, corregir el contexto y generar una versión coherente del texto.
-   - Envía el texto limpio a la Máquina 2.
+### 1. Servidor Principal (Gateway Frontend + Base de Datos)
+*   **Rol:** Gestiona usuarios, aloja la Interfaz Web (UI), recibe los PDFs, almacena la base de datos y sirve los archivos.
+*   **Tecnologías:** Docker (MongoDB), FastAPI, HTML/JS/CSS.
+*   **Puerto API:** `8000` | **Puerto DB:** `27017`
 
-3. **Máquina 2: El Extractor Analítico (Puerto 8002)**
-   - Utiliza el modelo `llama3.2:3b` (o qwen2.5:3b).
-   - Actúa como analista de datos para extraer los 5 puntos más importantes y las palabras clave.
-   - Envía esta lista de viñetas a la Máquina 3.
+### 2. Máquina 1: El Lector Profundo
+*   **Rol:** Extrae el texto del PDF y usa un LLM pesado para limpiar la estructura y contexto.
+*   **Modelo de Ollama:** `llama3.1:8b`
+*   **Tecnologías:** PyMuPDF, FastAPI.
+*   **Puerto API:** `8001`
 
-4. **Máquina 3: El Sintetizador y Juez (Puerto 8003)**
-   - Utiliza modelos rápidos como `phi3` o `gemma2:2b`.
-   - Genera un resumen ejecutivo (máx. 3 líneas).
-   - Asigna una prioridad al documento en función de su urgencia: **ROJO** (Alta), **ÁMBAR** (Media) o **VERDE** (Baja).
-   - Actualiza la base de datos de MongoDB con los resultados finales.
+### 3. Máquina 2: El Extractor Analítico
+*   **Rol:** Actúa como analista, leyendo el texto limpio para extraer los 5 puntos más importantes en viñetas.
+*   **Modelo de Ollama:** `llama3.2:3b` (o `qwen2.5:3b`)
+*   **Tecnologías:** FastAPI.
+*   **Puerto API:** `8002`
 
-## 🚀 Requisitos Previos
+### 4. Máquina 3: El Sintetizador y Juez
+*   **Rol:** Genera el resumen de 3 líneas, asigna la urgencia en color (ROJO, ÁMBAR, VERDE) y se conecta a la Base de Datos para guardar el resultado final.
+*   **Modelo de Ollama:** `phi3`
+*   **Tecnologías:** FastAPI, PyMongo.
+*   **Puerto API:** `8003`
 
-- [Docker](https://www.docker.com/) y Docker Compose.
-- [Python 3.8+](https://www.python.org/).
-- [Ollama](https://ollama.com/) instalado en el host local.
+---
 
-Debes descargar los modelos de IA que el sistema utilizará. Abre una terminal y ejecuta:
+## 🌐 Guía de Despliegue (Cómo configurar cada máquina)
 
-```bash
-ollama pull llama3.1:8b
-ollama pull llama3.2:3b
-ollama pull phi3
-```
+Si vas a presentar este proyecto utilizando 4 computadoras conectadas en red (LAN), sigue esta guía para cada computadora.
+*(Asegúrate de que todas las computadoras estén conectadas al mismo módem/router).*
 
-## 🛠 Instalación y Ejecución Local
+### Preparación (En el Servidor Principal)
+1.  Pasa el código del proyecto a la computadora elegida como Servidor Principal.
+2.  Abre una terminal y averigua la IP de esta máquina (ej. ejecutando `ipconfig` en Windows o `ip a` en Linux). Supongamos que su IP es `192.168.1.10`.
+3.  Levanta la base de datos ejecutando: `docker-compose up -d`.
+4.  Instala las dependencias (`pip install -r requirements.txt`).
+5.  Entra a la carpeta `frontend` y ejecuta:
+    ```bash
+    uvicorn main:app --host 0.0.0.0 --port 8000
+    ```
 
-1. **Clonar el repositorio**
-   ```bash
-   git clone <URL_DE_TU_REPOSITORIO>
-   cd Cluster_U2
-   ```
+### Preparación (En la Máquina 1)
+1.  Pasa la carpeta `machine1` a esta computadora.
+2.  Averigua la IP de la Máquina 2 (porque hacia ella enviará los datos). Supongamos que la M2 tiene la IP `192.168.1.20`.
+3.  Instala Ollama y descarga el modelo: `ollama pull llama3.1:8b`.
+4.  Instala dependencias (`pip install fastapi uvicorn requests PyMuPDF python-multipart`).
+5.  Inicia el servicio apuntando a la M2:
+    ```bash
+    export MACHINE_2_URL="http://192.168.1.20:8002/process"
+    uvicorn main:app --host 0.0.0.0 --port 8001
+    ```
+    *(Nota: Si usas Windows en vez de export usa `set MACHINE_2_URL=...`)*
 
-2. **Levantar la Base de Datos**
-   El proyecto utiliza MongoDB para almacenar el estado de los documentos y los usuarios, y Mongo Express para visualizar la BD.
-   ```bash
-   docker-compose up -d
-   ```
-   *Puedes ver la base de datos en [http://localhost:8081](http://localhost:8081).*
+### Preparación (En la Máquina 2)
+1.  Pasa la carpeta `machine2` a esta computadora.
+2.  Averigua la IP de la Máquina 3 (hacia donde enviará los datos). Supongamos que la M3 tiene la IP `192.168.1.30`.
+3.  Instala Ollama y descarga el modelo: `ollama pull llama3.2:3b`.
+4.  Instala dependencias (`pip install fastapi uvicorn requests pydantic`).
+5.  Inicia el servicio apuntando a la M3:
+    ```bash
+    export MACHINE_3_URL="http://192.168.1.30:8003/process"
+    uvicorn main:app --host 0.0.0.0 --port 8002
+    ```
 
-3. **Iniciar los Nodos del Clúster**
-   El proyecto incluye un script en Bash para levantar automáticamente todos los servicios de FastAPI.
-   ```bash
-   chmod +x run_cluster.sh
-   ./run_cluster.sh
-   ```
+### Preparación (En la Máquina 3)
+1.  Pasa la carpeta `machine3` a esta computadora.
+2.  Como esta máquina debe guardar el resultado final en la Base de Datos, necesita la IP del **Servidor Principal** (que en este ejemplo era `192.168.1.10`).
+3.  Instala Ollama y descarga el modelo: `ollama pull phi3`.
+4.  Instala dependencias (`pip install fastapi uvicorn requests pydantic pymongo`).
+5.  Inicia el servicio apuntando a la Base de Datos del Servidor Principal:
+    ```bash
+    export MONGO_URI="mongodb://192.168.1.10:27017"
+    uvicorn main:app --host 0.0.0.0 --port 8003
+    ```
 
-4. **Usar la Plataforma**
-   - Entra a **[http://localhost:8000](http://localhost:8000)** en tu navegador.
-   - Regístrate creando una cuenta (Asegúrate de elegir el rol de **Subidor** si quieres hacer pruebas subiendo archivos).
-   - Inicia sesión y arrastra un documento PDF para ver la magia de la IA en acción.
+---
 
-## 🌐 Despliegue en Red (Múltiples Computadoras)
-
-Para cumplir estrictamente con el concepto de "Sistema Distribuido" en diferentes computadoras físicas, haz lo siguiente:
-1. Pasa la carpeta `machine1` a la PC 1, `machine2` a la PC 2, etc.
-2. Abre el archivo `main.py` de cada máquina y modifica las variables de entorno de conexión (`OLLAMA_URL`, `MACHINE_2_URL`, `MACHINE_3_URL`) usando la dirección IPv4 de la computadora correspondiente en tu red local (LAN) en lugar de `localhost`.
-3. Ejecuta `uvicorn main:app --host 0.0.0.0 --port <puerto>` dentro de la carpeta correspondiente en cada PC.
-
-## 💻 Tecnologías Utilizadas
-
-- **Backend**: FastAPI, Python
-- **IA**: Ollama (Llama 3.1, Llama 3.2, Phi-3)
-- **Base de Datos**: MongoDB, Docker
-- **Frontend**: HTML5, Vanilla CSS, Vanilla JS
-- **Seguridad**: JWT (JSON Web Tokens), Passlib (Bcrypt)
+## 🚀 Cómo ejecutarlo todo localmente (en una sola computadora)
+Si quieres probar todo en tu misma PC antes de llevarlo a las 4 máquinas físicas:
+1.  Asegúrate de tener Docker corriendo y ejecuta `docker-compose up -d`.
+2.  Asegúrate de tener corriendo tu Ollama local con los 3 modelos descargados.
+3.  Simplemente ejecuta el script automatizado:
+    ```bash
+    chmod +x run_cluster.sh
+    ./run_cluster.sh
+    ```
+4.  Visita `http://localhost:8000` en tu navegador.
