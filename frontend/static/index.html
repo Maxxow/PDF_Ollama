@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cluster Doc AI | Distributed Processing</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --glass-bg: rgba(30, 41, 59, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --danger: #ef4444; /* ROJO */
+            --warning: #f59e0b; /* ÁMBAR */
+            --success: #10b981; /* VERDE */
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at top left, #1e1b4b, var(--bg-color));
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        /* Glassmorphism Classes */
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Container */
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 2rem auto;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        /* Header */
+        header {
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        header h1 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: linear-gradient(90deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        header .user-controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        /* Buttons */
+        button {
+            padding: 0.6rem 1.2rem;
+            border: none;
+            border-radius: 8px;
+            font-family: inherit;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+        }
+        .btn-danger {
+            background: transparent;
+            color: var(--danger);
+            border: 1px solid var(--danger);
+        }
+        .btn-danger:hover {
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        /* Modals */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal.active { display: flex; }
+        .modal-content {
+            padding: 2rem;
+            width: 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        
+        input, select {
+            width: 100%;
+            padding: 0.8rem;
+            border-radius: 8px;
+            border: 1px solid var(--glass-border);
+            background: rgba(15, 23, 42, 0.8);
+            color: white;
+            font-family: inherit;
+        }
+
+        /* Upload Area */
+        .upload-area {
+            padding: 2rem;
+            text-align: center;
+            border: 2px dashed var(--glass-border);
+            cursor: pointer;
+            transition: all 0.3s;
+            display: none;
+        }
+        .upload-area:hover {
+            border-color: var(--primary);
+            background: rgba(59, 130, 246, 0.1);
+        }
+        .upload-area.visible { display: block; }
+
+        /* Documents Grid */
+        .docs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1.5rem;
+        }
+        .doc-card {
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s;
+        }
+        .doc-card:hover {
+            transform: translateY(-5px);
+        }
+        .doc-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 4px; height: 100%;
+        }
+        .priority-rojo::before { background: var(--danger); box-shadow: 0 0 10px var(--danger); }
+        .priority-ámbar::before { background: var(--warning); box-shadow: 0 0 10px var(--warning); }
+        .priority-verde::before { background: var(--success); box-shadow: 0 0 10px var(--success); }
+        .priority-pendiente::before { background: var(--text-muted); }
+
+        .doc-title { font-weight: 600; font-size: 1.1rem; }
+        .doc-summary { font-size: 0.9rem; color: var(--text-muted); line-height: 1.5; }
+        .doc-meta { display: flex; justify-content: space-between; align-items: center; margin-top: auto; }
+        
+        .badge {
+            padding: 0.3rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .bg-rojo { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid var(--danger); }
+        .bg-ámbar { background: rgba(245, 158, 11, 0.2); color: #fcd34d; border: 1px solid var(--warning); }
+        .bg-verde { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; border: 1px solid var(--success); }
+        .bg-pendiente { background: rgba(148, 163, 184, 0.2); color: #cbd5e1; border: 1px solid var(--text-muted); }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header class="glass">
+            <h1>Cluster Doc AI</h1>
+            <div class="user-controls" id="userControls">
+                <button class="btn-primary" onclick="showLogin()">Login</button>
+            </div>
+        </header>
+
+        <div class="glass upload-area" id="uploadArea">
+            <h3 style="margin-bottom: 0.5rem;">Subir Documento (Solo Uploaders)</h3>
+            <p style="color: var(--text-muted); margin-bottom: 1rem;">Arrastra un archivo PDF o haz clic para seleccionar</p>
+            <input type="file" id="fileInput" accept=".pdf" style="display: none;">
+            <button class="btn-primary" onclick="document.getElementById('fileInput').click()">Seleccionar PDF</button>
+        </div>
+
+        <h2 style="font-weight: 600;">Documentos Procesados</h2>
+        <div class="docs-grid" id="docsGrid">
+            <!-- Cards will be dynamically inserted here -->
+        </div>
+    </div>
+
+    <!-- Login/Register Modal -->
+    <div class="modal" id="authModal">
+        <div class="glass modal-content">
+            <h2 id="authTitle">Login</h2>
+            <input type="text" id="username" placeholder="Usuario">
+            <input type="password" id="password" placeholder="Contraseña">
+            
+            <select id="roleSelect" style="display: none;">
+                <option value="viewer">Visualizador (Viewer)</option>
+                <option value="uploader">Subidor (Uploader)</option>
+            </select>
+
+            <button class="btn-primary" id="authSubmit" onclick="submitAuth()">Ingresar</button>
+            <p style="text-align: center; font-size: 0.9rem; color: var(--text-muted); cursor: pointer;" onclick="toggleAuthMode()" id="authToggle">¿No tienes cuenta? Regístrate</p>
+            <button class="btn-danger" onclick="closeAuth()">Cancelar</button>
+        </div>
+    </div>
+
+    <script>
+        let token = localStorage.getItem('token');
+        let role = localStorage.getItem('role');
+        let isLogin = true;
+
+        const API_URL = ""; 
+
+        // Initialize
+        checkAuth();
+        fetchDocuments();
+        setInterval(fetchDocuments, 5000); // Polling for updates
+
+        function checkAuth() {
+            const controls = document.getElementById('userControls');
+            const uploadArea = document.getElementById('uploadArea');
+            if (token) {
+                controls.innerHTML = `
+                    <span style="font-weight: 600; color: #cbd5e1;">Rol: ${role.toUpperCase()}</span>
+                    <button class="btn-danger" onclick="logout()">Logout</button>
+                `;
+                if (role === 'uploader') {
+                    uploadArea.classList.add('visible');
+                } else {
+                    uploadArea.classList.remove('visible');
+                }
+            } else {
+                controls.innerHTML = `<button class="btn-primary" onclick="showLogin()">Login</button>`;
+                uploadArea.classList.remove('visible');
+            }
+        }
+
+        function showLogin() {
+            isLogin = true;
+            document.getElementById('authTitle').innerText = "Login";
+            document.getElementById('authSubmit').innerText = "Ingresar";
+            document.getElementById('authToggle').innerText = "¿No tienes cuenta? Regístrate";
+            document.getElementById('roleSelect').style.display = "none";
+            document.getElementById('authModal').classList.add('active');
+        }
+
+        function toggleAuthMode() {
+            isLogin = !isLogin;
+            if (isLogin) {
+                showLogin();
+            } else {
+                document.getElementById('authTitle').innerText = "Registro";
+                document.getElementById('authSubmit').innerText = "Registrarse";
+                document.getElementById('authToggle').innerText = "¿Ya tienes cuenta? Ingresa";
+                document.getElementById('roleSelect').style.display = "block";
+            }
+        }
+
+        function closeAuth() {
+            document.getElementById('authModal').classList.remove('active');
+        }
+
+        async function submitAuth() {
+            const u = document.getElementById('username').value;
+            const p = document.getElementById('password').value;
+            
+            if (isLogin) {
+                const formData = new URLSearchParams();
+                formData.append('username', u);
+                formData.append('password', p);
+                
+                try {
+                    const res = await fetch(`${API_URL}/token`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: formData
+                    });
+                    if (!res.ok) throw new Error("Credenciales inválidas");
+                    const data = await res.json();
+                    token = data.access_token;
+                    role = data.role;
+                    localStorage.setItem('token', token);
+                    localStorage.setItem('role', role);
+                    closeAuth();
+                    checkAuth();
+                    fetchDocuments();
+                } catch (e) { alert(e.message); }
+            } else {
+                const r = document.getElementById('roleSelect').value;
+                try {
+                    const res = await fetch(`${API_URL}/register`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username: u, password: p, role: r })
+                    });
+                    if (!res.ok) {
+                        const err = await res.json();
+                        throw new Error(err.detail);
+                    }
+                    alert("Registro exitoso, ahora puedes iniciar sesión.");
+                    showLogin();
+                } catch (e) { alert(e.message); }
+            }
+        }
+
+        function logout() {
+            token = null; role = null;
+            localStorage.removeItem('token');
+            localStorage.removeItem('role');
+            checkAuth();
+            fetchDocuments(); // Refresh to potentially show not logged in state properly
+        }
+
+        document.getElementById('fileInput').addEventListener('change', async (e) => {
+            if (!e.target.files[0]) return;
+            const file = e.target.files[0];
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const res = await fetch(`${API_URL}/api/upload`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    body: formData
+                });
+                if (!res.ok) throw new Error("Error subiendo archivo");
+                alert("Archivo subido, el clúster está procesando...");
+                fetchDocuments();
+            } catch (err) { alert(err.message); }
+        });
+
+        async function fetchDocuments() {
+            if (!token) {
+                document.getElementById('docsGrid').innerHTML = "<p style='color: var(--text-muted);'>Inicia sesión para ver los documentos.</p>";
+                return;
+            }
+            try {
+                const res = await fetch(`${API_URL}/api/documents`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.status === 401) { logout(); return; }
+                const docs = await res.json();
+                renderDocs(docs);
+            } catch (e) { console.error(e); }
+        }
+
+        function renderDocs(docs) {
+            const grid = document.getElementById('docsGrid');
+            grid.innerHTML = '';
+            docs.forEach(doc => {
+                let pClass = "pendiente";
+                if(doc.priority === "ROJO") pClass = "rojo";
+                if(doc.priority === "ÁMBAR" || doc.priority === "AMBAR") pClass = "ámbar";
+                if(doc.priority === "VERDE") pClass = "verde";
+
+                const card = document.createElement('div');
+                card.className = `glass doc-card priority-${pClass}`;
+                card.innerHTML = `
+                    <div class="doc-title">${doc.filename}</div>
+                    <div class="doc-summary">${doc.summary}</div>
+                    <div class="doc-meta">
+                        <span class="badge bg-${pClass}">${doc.priority}</span>
+                        ${doc.status === 'COMPLETED' ? 
+                            `<button class="btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" onclick="downloadDoc('${doc.id}')">Descargar</button>` 
+                            : `<span style="font-size: 0.8rem; color: var(--text-muted);">Procesando...</span>`}
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function downloadDoc(id) {
+            window.location.href = `${API_URL}/api/download/${id}?token=${token}`; 
+            // Better approach is to fetch as blob if auth is strictly header-based, 
+            // but for simplicity in UI we'll use a direct fetch approach.
+        }
+        
+        // Enhance Download
+        async function downloadDoc(id) {
+            const res = await fetch(`${API_URL}/api/download/${id}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const blob = await res.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                // Get filename from header if possible, else default
+                a.download = "document.pdf";
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+            } else {
+                alert("Error descargando archivo.");
+            }
+        }
+    </script>
+</body>
+</html>

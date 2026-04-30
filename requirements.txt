@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+pymongo
+requests
+PyMuPDF
+python-multipart
+passlib[bcrypt]
+pyjwt
+aiofiles
