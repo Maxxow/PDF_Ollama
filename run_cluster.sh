@@ -19,6 +19,10 @@ cleanup() {
 }
 trap cleanup EXIT
 
+# Activate virtual environment
+echo "Activating virtual environment .llama..."
+source .llama/bin/activate
+
 # Install requirements if needed
 echo "Installing requirements..."
 pip install -r requirements.txt

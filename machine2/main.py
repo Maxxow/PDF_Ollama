@@ -5,8 +5,8 @@ from pydantic import BaseModel
 
 app = FastAPI(title="Máquina 2: El Extractor Analítico")
 
-OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
-MACHINE_3_URL = os.getenv("MACHINE_3_URL", "http://localhost:8003/process")
+OLLAMA_URL = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434")
+MACHINE_3_URL = os.getenv("MACHINE_3_URL", "http://127.0.0.1:8003/process")
 
 class ProcessRequest(BaseModel):
     document_id: str

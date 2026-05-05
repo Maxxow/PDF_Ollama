@@ -7,8 +7,8 @@ from datetime import datetime
 
 app = FastAPI(title="Máquina 3: El Sintetizador y Juez")
 
-OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
-MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
+OLLAMA_URL = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434")
+MONGO_URI = os.getenv("MONGO_URI", "mongodb://127.0.0.1:27017")
 
 client = MongoClient(MONGO_URI)
 db = client["document_system"]

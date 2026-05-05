@@ -6,8 +6,8 @@ from pydantic import BaseModel
 
 app = FastAPI(title="Máquina 1: El Lector Profundo")
 
-OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
-MACHINE_2_URL = os.getenv("MACHINE_2_URL", "http://localhost:8002/process")
+OLLAMA_URL = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434")
+MACHINE_2_URL = os.getenv("MACHINE_2_URL", "http://127.0.0.1:8002/process")
 
 class ProcessRequest(BaseModel):
     filename: str

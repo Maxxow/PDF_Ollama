@@ -16,13 +16,13 @@ import aiofiles
 app = FastAPI(title="Frontend y Gateway API")
 
 # Setup MongoDB
-MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
+MONGO_URI = os.getenv("MONGO_URI", "mongodb://127.0.0.1:27017")
 client = MongoClient(MONGO_URI)
 db = client["document_system"]
 users_collection = db["users"]
 docs_collection = db["documents"]
 
-MACHINE_1_URL = os.getenv("MACHINE_1_URL", "http://localhost:8001/upload")
+MACHINE_1_URL = os.getenv("MACHINE_1_URL", "http://127.0.0.1:8001/upload")
 
 # Security
 SECRET_KEY = "my_super_secret_key"
