@@ -41,7 +41,10 @@ async def process_document(req: ProcessRequest):
         m3_response = requests.post(MACHINE_3_URL, json=payload, timeout=600)
         m3_response.raise_for_status()
     except requests.exceptions.RequestException as e:
-        raise HTTPException(status_code=500, detail=f"Error forwarding to Machine 3: {e}")
+        err_msg = str(e)
+        if hasattr(e, 'response') and e.response is not None:
+            err_msg += f" | M3 dijo: {e.response.text}"
+        raise HTTPException(status_code=500, detail=f"Error forwarding to Machine 3: {err_msg}")
 
     return {"message": "Extracted key points and sent to Machine 3", "machine3_response": m3_response.json()}
 

@@ -136,8 +136,11 @@ async def upload_file(file: UploadFile = File(...), current_user: dict = Depends
                 res = requests.post(MACHINE_1_URL, files={"file": f}, data={"document_id": d_id}, timeout=3000)
                 res.raise_for_status()
         except Exception as e:
-            print(f"Error calling Machine 1: {e}")
-            docs_collection.update_one({"_id": ObjectId(d_id)}, {"$set": {"status": "ERROR", "summary": f"Fallo en el pipeline: {str(e)}", "priority": "ERROR"}})
+            error_details = str(e)
+            if hasattr(e, 'response') and e.response is not None:
+                error_details += f" | Detalles: {e.response.text}"
+            print(f"Error calling Machine 1: {error_details}")
+            docs_collection.update_one({"_id": ObjectId(d_id)}, {"$set": {"status": "ERROR", "summary": f"Fallo en el pipeline: {error_details}", "priority": "ERROR"}})
 
     threading.Thread(target=send_to_machine1, args=(file_path, doc_id)).start()
 

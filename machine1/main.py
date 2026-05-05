@@ -7,7 +7,7 @@ from pydantic import BaseModel
 app = FastAPI(title="Máquina 1: El Lector Profundo")
 
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434")
-MACHINE_2_URL = os.getenv("MACHINE_2_URL", "http://127.0.0.1:8002/process")
+MACHINE_2_URL = os.getenv("MACHINE_2_URL", "http://192.168.1.92:8002/process")
 
 class ProcessRequest(BaseModel):
     filename: str
@@ -53,7 +53,10 @@ async def upload_document(file: UploadFile = File(...), document_id: str = Form(
         m2_response = requests.post(MACHINE_2_URL, json=payload, timeout=600)
         m2_response.raise_for_status()
     except requests.exceptions.RequestException as e:
-        raise HTTPException(status_code=500, detail=f"Error forwarding to Machine 2: {e}")
+        err_msg = str(e)
+        if hasattr(e, 'response') and e.response is not None:
+            err_msg += f" | M2 dijo: {e.response.text}"
+        raise HTTPException(status_code=500, detail=f"Error forwarding to Machine 2: {err_msg}")
 
     return {"message": "Document processed by Machine 1 and sent to Machine 2.", "machine2_response": m2_response.json()}
 
