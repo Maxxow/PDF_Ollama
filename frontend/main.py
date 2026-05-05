@@ -8,7 +8,6 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from pymongo import MongoClient
-from passlib.context import CryptContext
 from bson.objectid import ObjectId
 import requests
 import aiofiles
@@ -29,7 +28,6 @@ SECRET_KEY = "my_super_secret_key"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 class UserCreate(BaseModel):
@@ -37,11 +35,13 @@ class UserCreate(BaseModel):
     password: str
     role: str = "viewer" # uploader or viewer
 
+import bcrypt
+
 def verify_password(plain_password, hashed_password):
-    return pwd_context.verify(plain_password, hashed_password)
+    return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
 
 def get_password_hash(password):
-    return pwd_context.hash(password)
+    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
 def create_access_token(data: dict):
     to_encode = data.copy()
@@ -133,10 +133,11 @@ async def upload_file(file: UploadFile = File(...), current_user: dict = Depends
     def send_to_machine1(path, d_id):
         try:
             with open(path, 'rb') as f:
-                requests.post(MACHINE_1_URL, files={"file": f}, data={"document_id": d_id})
+                res = requests.post(MACHINE_1_URL, files={"file": f}, data={"document_id": d_id}, timeout=3000)
+                res.raise_for_status()
         except Exception as e:
             print(f"Error calling Machine 1: {e}")
-            docs_collection.update_one({"_id": ObjectId(d_id)}, {"$set": {"status": "ERROR", "summary": str(e)}})
+            docs_collection.update_one({"_id": ObjectId(d_id)}, {"$set": {"status": "ERROR", "summary": f"Fallo en el pipeline: {str(e)}", "priority": "ERROR"}})
 
     threading.Thread(target=send_to_machine1, args=(file_path, doc_id)).start()
 
@@ -152,6 +153,25 @@ def download_file(doc_id: str, current_user: dict = Depends(get_current_user)):
     if os.path.exists(file_path):
         return FileResponse(file_path, filename=doc['filename'])
     raise HTTPException(status_code=404, detail="File not found on server")
+
+@app.delete("/api/documents/{doc_id}")
+def delete_document(doc_id: str, current_user: dict = Depends(get_current_user)):
+    if current_user["role"] != "uploader":
+        raise HTTPException(status_code=403, detail="Not authorized to delete files.")
+    
+    doc = docs_collection.find_one({"_id": ObjectId(doc_id)})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+        
+    # Delete from database
+    docs_collection.delete_one({"_id": ObjectId(doc_id)})
+    
+    # Delete physical file if exists
+    file_path = f"../uploads/{doc_id}_{doc['filename']}"
+    if os.path.exists(file_path):
+        os.remove(file_path)
+        
+    return {"message": "Document deleted successfully"}
 
 # Mount Static Files (Frontend UI)
 app.mount("/", StaticFiles(directory="static", html=True), name="static")

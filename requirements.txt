@@ -4,6 +4,6 @@ pymongo
 requests
 PyMuPDF
 python-multipart
-passlib[bcrypt]
+bcrypt
 pyjwt
 aiofiles

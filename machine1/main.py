@@ -26,6 +26,8 @@ async def upload_document(file: UploadFile = File(...), document_id: str = Form(
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error reading PDF: {e}")
 
+    print(f"======> MÁQUINA 1: Extrayendo texto y llamando a llama3.1:8b para {file.filename}...")
+
     # 2. Call Ollama (llama3.1:8b)
     prompt = f"Analiza a profundidad este documento, corrige la estructura y genera una versión limpia y coherente del texto:\n\n[TEXTO CRUDO]\n{raw_text}"
     
@@ -34,19 +36,21 @@ async def upload_document(file: UploadFile = File(...), document_id: str = Form(
             "model": "llama3.1:8b",
             "prompt": prompt,
             "stream": False
-        }, timeout=300) # Give it 5 minutes as it's a large model
+        }, timeout=600) # Give it 10 minutes as it's a large model
         response.raise_for_status()
         clean_text = response.json().get("response", "")
     except requests.exceptions.RequestException as e:
+        print(f"Error Ollama M1: {e}")
         raise HTTPException(status_code=500, detail=f"Error connecting to Ollama on Machine 1: {e}")
 
     # 3. Send to Machine 2
+    print(f"======> MÁQUINA 1: Texto extraído exitosamente. Enviando a Máquina 2...")
     try:
         payload = {
             "document_id": document_id,
             "clean_text": clean_text
         }
-        m2_response = requests.post(MACHINE_2_URL, json=payload, timeout=30)
+        m2_response = requests.post(MACHINE_2_URL, json=payload, timeout=600)
         m2_response.raise_for_status()
     except requests.exceptions.RequestException as e:
         raise HTTPException(status_code=500, detail=f"Error forwarding to Machine 2: {e}")

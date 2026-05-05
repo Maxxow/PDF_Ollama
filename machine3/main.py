@@ -20,6 +20,8 @@ class ProcessRequest(BaseModel):
 
 @app.post("/process")
 async def process_document(req: ProcessRequest):
+    print(f"======> MÁQUINA 3: Recibidas las viñetas. Llamando a phi3 para resumen y color...")
+    
     # 1. Call A: Resumen Final
     prompt_a = f"Redacta un resumen final de máximo 3 líneas usando estos puntos:\n\n{req.key_points}"
     try:
@@ -27,10 +29,11 @@ async def process_document(req: ProcessRequest):
             "model": "phi3",  # Using phi3 as suggested
             "prompt": prompt_a,
             "stream": False
-        }, timeout=60)
+        }, timeout=600)
         res_a.raise_for_status()
         summary = res_a.json().get("response", "").strip()
     except requests.exceptions.RequestException as e:
+        print(f"Error Llamada A M3: {e}")
         raise HTTPException(status_code=500, detail=f"Error en Llamada A: {e}")
 
     # 2. Call B: Evaluación de Urgencia
@@ -40,7 +43,7 @@ async def process_document(req: ProcessRequest):
             "model": "phi3",
             "prompt": prompt_b,
             "stream": False
-        }, timeout=30)
+        }, timeout=600)
         res_b.raise_for_status()
         priority_raw = res_b.json().get("response", "").strip().upper()
         

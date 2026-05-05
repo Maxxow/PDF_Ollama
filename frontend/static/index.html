@@ -384,13 +384,30 @@
                     <div class="doc-summary">${doc.summary}</div>
                     <div class="doc-meta">
                         <span class="badge bg-${pClass}">${doc.priority}</span>
+                        <div>
                         ${doc.status === 'COMPLETED' ? 
                             `<button class="btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" onclick="downloadDoc('${doc.id}')">Descargar</button>` 
                             : `<span style="font-size: 0.8rem; color: var(--text-muted);">Procesando...</span>`}
+                        ${role === 'uploader' ? 
+                            `<button class="btn-danger" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; margin-left: 5px;" onclick="deleteDoc('${doc.id}')">Eliminar</button>` 
+                            : ''}
+                        </div>
                     </div>
                 `;
                 grid.appendChild(card);
             });
+        }
+
+        async function deleteDoc(id) {
+            if(!confirm("¿Estás seguro de que deseas eliminar este documento del clúster?")) return;
+            try {
+                const res = await fetch(`${API_URL}/api/documents/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!res.ok) throw new Error("No tienes permisos o hubo un error al eliminar.");
+                fetchDocuments();
+            } catch (err) { alert(err.message); }
         }
 
         function downloadDoc(id) {
