@@ -4,42 +4,145 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cluster Doc AI | Distributed Processing</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #0f172a;
-            --glass-bg: rgba(30, 41, 59, 0.7);
-            --glass-border: rgba(255, 255, 255, 0.1);
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --primary: #3b82f6;
+            --bg-body: #f3f4f6; /* Light gray background */
+            --bg-card: #ffffff; /* White cards */
+            --text-main: #1f2937; /* Dark gray for main text */
+            --text-muted: #6b7280; /* Lighter gray for secondary text */
+            --primary: #3b82f6; /* Blue */
             --primary-hover: #2563eb;
             --danger: #ef4444; /* ROJO */
             --warning: #f59e0b; /* ÁMBAR */
             --success: #10b981; /* VERDE */
+            --border-color: #e5e7eb;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         }
+
         * { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
             font-family: 'Inter', sans-serif;
-            background: radial-gradient(circle at top left, #1e1b4b, var(--bg-color));
+            background-color: var(--bg-body);
             color: var(--text-main);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
-            align-items: center;
-        }
-        
-        /* Glassmorphism Classes */
-        .glass {
-            background: var(--glass-bg);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid var(--glass-border);
-            border-radius: 16px;
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
         }
 
-        /* Container */
+        /* Forms & Inputs */
+        input, select {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: #f9fafb;
+            color: var(--text-main);
+            font-family: inherit;
+            font-size: 0.95rem;
+            transition: border-color 0.2s;
+            margin-bottom: 1rem;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        /* Buttons */
+        button {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-family: inherit;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 100%;
+        }
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            box-shadow: var(--shadow-sm);
+        }
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+        .btn-danger-outline {
+            background: transparent;
+            color: var(--danger);
+            border: 1px solid var(--danger);
+        }
+        .btn-danger-outline:hover {
+            background: #fef2f2;
+        }
+        .btn-danger {
+            background: #fee2e2;
+            color: var(--danger);
+            border: none;
+        }
+        .btn-danger:hover {
+            background: #fecaca;
+        }
+
+        /* --- AUTH DASHBOARD (Central Login) --- */
+        #authSection {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex: 1; /* Takes full remaining height */
+            padding: 2rem;
+        }
+
+        .auth-card {
+            background: var(--bg-card);
+            width: 100%;
+            max-width: 400px;
+            padding: 2.5rem;
+            border-radius: 16px;
+            box-shadow: var(--shadow-lg);
+            text-align: center;
+        }
+
+        .auth-card h2 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--text-main);
+        }
+        
+        .auth-card p.subtitle {
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+            font-size: 0.95rem;
+        }
+
+        .toggle-link {
+            display: inline-block;
+            margin-top: 1.5rem;
+            color: var(--primary);
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .toggle-link:hover {
+            text-decoration: underline;
+        }
+
+        /* --- MAIN DASHBOARD (App Content) --- */
+        #appSection {
+            display: none; /* Hidden by default until logged in */
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+
         .container {
             width: 90%;
             max-width: 1200px;
@@ -51,170 +154,142 @@
 
         /* Header */
         header {
-            padding: 1.5rem 2rem;
+            background: var(--bg-card);
+            padding: 1.25rem 2rem;
+            border-radius: 12px;
+            box-shadow: var(--shadow-sm);
             display: flex;
             justify-content: space-between;
             align-items: center;
+            border: 1px solid var(--border-color);
         }
         header h1 {
-            font-size: 1.8rem;
+            font-size: 1.5rem;
             font-weight: 800;
-            background: linear-gradient(90deg, #60a5fa, #a78bfa);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: var(--primary);
+            letter-spacing: -0.5px;
         }
         header .user-controls {
             display: flex;
-            gap: 1rem;
+            gap: 1.5rem;
             align-items: center;
         }
-
-        /* Buttons */
-        button {
-            padding: 0.6rem 1.2rem;
-            border: none;
-            border-radius: 8px;
-            font-family: inherit;
+        .user-role-badge {
+            background: #f1f5f9;
+            color: #475569;
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
             font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        .btn-primary {
-            background: var(--primary);
-            color: white;
-        }
-        .btn-primary:hover {
-            background: var(--primary-hover);
-            transform: translateY(-2px);
-        }
-        .btn-danger {
-            background: transparent;
-            color: var(--danger);
-            border: 1px solid var(--danger);
-        }
-        .btn-danger:hover {
-            background: rgba(239, 68, 68, 0.1);
-        }
-
-        /* Modals */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.6);
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-        .modal.active { display: flex; }
-        .modal-content {
-            padding: 2rem;
-            width: 400px;
-            display: flex;
-            flex-direction: column;
-            gap: 1.2rem;
-            animation: fadeIn 0.3s ease;
-        }
-        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
-        
-        input, select {
-            width: 100%;
-            padding: 0.8rem;
-            border-radius: 8px;
-            border: 1px solid var(--glass-border);
-            background: rgba(15, 23, 42, 0.8);
-            color: white;
-            font-family: inherit;
+            border: 1px solid #cbd5e1;
         }
 
         /* Upload Area */
         .upload-area {
-            padding: 2rem;
+            background: var(--bg-card);
+            padding: 3rem 2rem;
             text-align: center;
-            border: 2px dashed var(--glass-border);
+            border: 2px dashed #cbd5e1;
+            border-radius: 12px;
             cursor: pointer;
             transition: all 0.3s;
-            display: none;
+            display: none; /* Hidden for viewers */
         }
         .upload-area:hover {
             border-color: var(--primary);
-            background: rgba(59, 130, 246, 0.1);
+            background: #eff6ff;
         }
         .upload-area.visible { display: block; }
+        .upload-area h3 { color: var(--text-main); margin-bottom: 0.5rem; font-weight: 600;}
 
         /* Documents Grid */
+        .section-title {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--text-main);
+            margin-bottom: -0.5rem;
+        }
+
         .docs-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
             gap: 1.5rem;
         }
+        
         .doc-card {
+            background: var(--bg-card);
             padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border-color);
             display: flex;
             flex-direction: column;
             gap: 1rem;
             position: relative;
             overflow: hidden;
-            transition: transform 0.3s;
+            transition: transform 0.2s, box-shadow 0.2s;
         }
         .doc-card:hover {
-            transform: translateY(-5px);
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
         }
+        
+        /* Colored top border for priority */
         .doc-card::before {
             content: '';
             position: absolute;
-            top: 0; left: 0; width: 4px; height: 100%;
+            top: 0; left: 0; width: 100%; height: 4px;
         }
-        .priority-rojo::before { background: var(--danger); box-shadow: 0 0 10px var(--danger); }
-        .priority-ámbar::before { background: var(--warning); box-shadow: 0 0 10px var(--warning); }
-        .priority-verde::before { background: var(--success); box-shadow: 0 0 10px var(--success); }
-        .priority-pendiente::before { background: var(--text-muted); }
+        .priority-rojo::before { background: var(--danger); }
+        .priority-ámbar::before { background: var(--warning); }
+        .priority-verde::before { background: var(--success); }
+        .priority-pendiente::before { background: #94a3b8; }
 
-        .doc-title { font-weight: 600; font-size: 1.1rem; }
-        .doc-summary { font-size: 0.9rem; color: var(--text-muted); line-height: 1.5; }
-        .doc-meta { display: flex; justify-content: space-between; align-items: center; margin-top: auto; }
+        .doc-title { font-weight: 700; font-size: 1.15rem; color: var(--text-main); word-break: break-all; }
+        .doc-summary { font-size: 0.95rem; color: var(--text-muted); line-height: 1.6; }
+        .doc-meta { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-top: auto; 
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
         
         .badge {
-            padding: 0.3rem 0.6rem;
-            border-radius: 12px;
-            font-size: 0.8rem;
-            font-weight: 600;
+            padding: 0.35rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
-        .bg-rojo { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid var(--danger); }
-        .bg-ámbar { background: rgba(245, 158, 11, 0.2); color: #fcd34d; border: 1px solid var(--warning); }
-        .bg-verde { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; border: 1px solid var(--success); }
-        .bg-pendiente { background: rgba(148, 163, 184, 0.2); color: #cbd5e1; border: 1px solid var(--text-muted); }
+        .bg-rojo { background: #fee2e2; color: #b91c1c; }
+        .bg-ámbar { background: #fef3c7; color: #b45309; }
+        .bg-verde { background: #d1fae5; color: #047857; }
+        .bg-pendiente { background: #f1f5f9; color: #475569; }
+        
+        .card-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .card-actions button {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.85rem;
+            width: auto;
+        }
 
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <header class="glass">
-            <h1>Cluster Doc AI</h1>
-            <div class="user-controls" id="userControls">
-                <button class="btn-primary" onclick="showLogin()">Login</button>
-            </div>
-        </header>
-
-        <div class="glass upload-area" id="uploadArea">
-            <h3 style="margin-bottom: 0.5rem;">Subir Documento (Solo Uploaders)</h3>
-            <p style="color: var(--text-muted); margin-bottom: 1rem;">Arrastra un archivo PDF o haz clic para seleccionar</p>
-            <input type="file" id="fileInput" accept=".pdf" style="display: none;">
-            <button class="btn-primary" onclick="document.getElementById('fileInput').click()">Seleccionar PDF</button>
-        </div>
-
-        <h2 style="font-weight: 600;">Documentos Procesados</h2>
-        <div class="docs-grid" id="docsGrid">
-            <!-- Cards will be dynamically inserted here -->
-        </div>
-    </div>
-
-    <!-- Login/Register Modal -->
-    <div class="modal" id="authModal">
-        <div class="glass modal-content">
-            <h2 id="authTitle">Login</h2>
-            <input type="text" id="username" placeholder="Usuario">
+    <!-- CENTRAL LOGIN DASHBOARD -->
+    <div id="authSection">
+        <div class="auth-card">
+            <h2 id="authTitle">Bienvenido</h2>
+            <p class="subtitle" id="authSubtitle">Inicia sesión en el Clúster IA</p>
+            
+            <input type="text" id="username" placeholder="Nombre de usuario">
             <input type="password" id="password" placeholder="Contraseña">
             
             <select id="roleSelect" style="display: none;">
@@ -223,8 +298,33 @@
             </select>
 
             <button class="btn-primary" id="authSubmit" onclick="submitAuth()">Ingresar</button>
-            <p style="text-align: center; font-size: 0.9rem; color: var(--text-muted); cursor: pointer;" onclick="toggleAuthMode()" id="authToggle">¿No tienes cuenta? Regístrate</p>
-            <button class="btn-danger" onclick="closeAuth()">Cancelar</button>
+            
+            <a class="toggle-link" onclick="toggleAuthMode()" id="authToggle">¿No tienes cuenta? Crea una aquí</a>
+        </div>
+    </div>
+
+    <!-- MAIN APP DASHBOARD -->
+    <div id="appSection">
+        <div class="container">
+            <header>
+                <h1>Cluster Doc AI</h1>
+                <div class="user-controls">
+                    <span class="user-role-badge" id="roleBadge">Rol: N/A</span>
+                    <button class="btn-danger-outline" style="width: auto; padding: 0.5rem 1rem;" onclick="logout()">Cerrar Sesión</button>
+                </div>
+            </header>
+
+            <div class="upload-area" id="uploadArea">
+                <h3>Subir Nuevo Documento</h3>
+                <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Arrastra un archivo PDF o haz clic para seleccionarlo</p>
+                <input type="file" id="fileInput" accept=".pdf" style="display: none;">
+                <button class="btn-primary" style="max-width: 200px;" onclick="document.getElementById('fileInput').click()">Seleccionar PDF</button>
+            </div>
+
+            <h2 class="section-title">Documentos Procesados</h2>
+            <div class="docs-grid" id="docsGrid">
+                <!-- Cards will be dynamically inserted here -->
+            </div>
         </div>
     </div>
 
@@ -237,35 +337,48 @@
 
         // Initialize
         checkAuth();
-        fetchDocuments();
-        setInterval(fetchDocuments, 5000); // Polling for updates
+        let pollInterval = null;
 
         function checkAuth() {
-            const controls = document.getElementById('userControls');
+            const authSection = document.getElementById('authSection');
+            const appSection = document.getElementById('appSection');
             const uploadArea = document.getElementById('uploadArea');
+            const roleBadge = document.getElementById('roleBadge');
+
             if (token) {
-                controls.innerHTML = `
-                    <span style="font-weight: 600; color: #cbd5e1;">Rol: ${role.toUpperCase()}</span>
-                    <button class="btn-danger" onclick="logout()">Logout</button>
-                `;
+                // Logged in
+                authSection.style.display = 'none';
+                appSection.style.display = 'flex';
+                roleBadge.innerText = `Rol: ${role.toUpperCase()}`;
+                
                 if (role === 'uploader') {
                     uploadArea.classList.add('visible');
                 } else {
                     uploadArea.classList.remove('visible');
                 }
+
+                fetchDocuments();
+                if(!pollInterval) pollInterval = setInterval(fetchDocuments, 5000);
             } else {
-                controls.innerHTML = `<button class="btn-primary" onclick="showLogin()">Login</button>`;
-                uploadArea.classList.remove('visible');
+                // Not logged in
+                authSection.style.display = 'flex';
+                appSection.style.display = 'none';
+                showLogin();
+                
+                if(pollInterval) {
+                    clearInterval(pollInterval);
+                    pollInterval = null;
+                }
             }
         }
 
         function showLogin() {
             isLogin = true;
-            document.getElementById('authTitle').innerText = "Login";
+            document.getElementById('authTitle').innerText = "Bienvenido";
+            document.getElementById('authSubtitle').innerText = "Inicia sesión en el Clúster IA";
             document.getElementById('authSubmit').innerText = "Ingresar";
-            document.getElementById('authToggle').innerText = "¿No tienes cuenta? Regístrate";
+            document.getElementById('authToggle').innerText = "¿No tienes cuenta? Crea una aquí";
             document.getElementById('roleSelect').style.display = "none";
-            document.getElementById('authModal').classList.add('active');
         }
 
         function toggleAuthMode() {
@@ -274,19 +387,26 @@
                 showLogin();
             } else {
                 document.getElementById('authTitle').innerText = "Registro";
+                document.getElementById('authSubtitle').innerText = "Únete a la plataforma distribuida";
                 document.getElementById('authSubmit').innerText = "Registrarse";
-                document.getElementById('authToggle').innerText = "¿Ya tienes cuenta? Ingresa";
+                document.getElementById('authToggle').innerText = "¿Ya tienes cuenta? Inicia sesión";
                 document.getElementById('roleSelect').style.display = "block";
             }
         }
 
-        function closeAuth() {
-            document.getElementById('authModal').classList.remove('active');
-        }
-
         async function submitAuth() {
-            const u = document.getElementById('username').value;
-            const p = document.getElementById('password').value;
+            const u = document.getElementById('username').value.trim();
+            const p = document.getElementById('password').value.trim();
+            
+            if(!u || !p) {
+                alert("Por favor, llena todos los campos.");
+                return;
+            }
+
+            const btn = document.getElementById('authSubmit');
+            const originalText = btn.innerText;
+            btn.innerText = "Cargando...";
+            btn.disabled = true;
             
             if (isLogin) {
                 const formData = new URLSearchParams();
@@ -305,10 +425,10 @@
                     role = data.role;
                     localStorage.setItem('token', token);
                     localStorage.setItem('role', role);
-                    closeAuth();
                     checkAuth();
-                    fetchDocuments();
-                } catch (e) { alert(e.message); }
+                } catch (e) { 
+                    alert(e.message); 
+                }
             } else {
                 const r = document.getElementById('roleSelect').value;
                 try {
@@ -321,18 +441,25 @@
                         const err = await res.json();
                         throw new Error(err.detail);
                     }
-                    alert("Registro exitoso, ahora puedes iniciar sesión.");
+                    alert("Registro exitoso. Ahora puedes iniciar sesión.");
                     showLogin();
-                } catch (e) { alert(e.message); }
+                } catch (e) { 
+                    alert(e.message); 
+                }
             }
+            
+            btn.innerText = originalText;
+            btn.disabled = false;
         }
 
         function logout() {
-            token = null; role = null;
+            token = null; 
+            role = null;
             localStorage.removeItem('token');
             localStorage.removeItem('role');
+            document.getElementById('username').value = "";
+            document.getElementById('password').value = "";
             checkAuth();
-            fetchDocuments(); // Refresh to potentially show not logged in state properly
         }
 
         document.getElementById('fileInput').addEventListener('change', async (e) => {
@@ -348,16 +475,14 @@
                     body: formData
                 });
                 if (!res.ok) throw new Error("Error subiendo archivo");
-                alert("Archivo subido, el clúster está procesando...");
+                alert("Archivo subido exitosamente. El clúster lo está procesando...");
+                document.getElementById('fileInput').value = ""; // reset
                 fetchDocuments();
             } catch (err) { alert(err.message); }
         });
 
         async function fetchDocuments() {
-            if (!token) {
-                document.getElementById('docsGrid').innerHTML = "<p style='color: var(--text-muted);'>Inicia sesión para ver los documentos.</p>";
-                return;
-            }
+            if (!token) return;
             try {
                 const res = await fetch(`${API_URL}/api/documents`, {
                     headers: { 'Authorization': `Bearer ${token}` }
@@ -370,6 +495,11 @@
 
         function renderDocs(docs) {
             const grid = document.getElementById('docsGrid');
+            if(docs.length === 0) {
+                grid.innerHTML = "<p style='color: var(--text-muted); grid-column: 1/-1; text-align: center; padding: 2rem;'>Aún no hay documentos en el clúster.</p>";
+                return;
+            }
+            
             grid.innerHTML = '';
             docs.forEach(doc => {
                 let pClass = "pendiente";
@@ -378,18 +508,18 @@
                 if(doc.priority === "VERDE") pClass = "verde";
 
                 const card = document.createElement('div');
-                card.className = `glass doc-card priority-${pClass}`;
+                card.className = `doc-card priority-${pClass}`;
                 card.innerHTML = `
                     <div class="doc-title">${doc.filename}</div>
                     <div class="doc-summary">${doc.summary}</div>
                     <div class="doc-meta">
                         <span class="badge bg-${pClass}">${doc.priority}</span>
-                        <div>
+                        <div class="card-actions">
                         ${doc.status === 'COMPLETED' ? 
-                            `<button class="btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" onclick="downloadDoc('${doc.id}')">Descargar</button>` 
-                            : `<span style="font-size: 0.8rem; color: var(--text-muted);">Procesando...</span>`}
+                            `<button class="btn-primary" onclick="downloadDoc('${doc.id}')">Descargar</button>` 
+                            : `<span style="font-size: 0.85rem; color: var(--text-muted); padding: 0.4rem;">Procesando...</span>`}
                         ${role === 'uploader' ? 
-                            `<button class="btn-danger" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; margin-left: 5px;" onclick="deleteDoc('${doc.id}')">Eliminar</button>` 
+                            `<button class="btn-danger" onclick="deleteDoc('${doc.id}')">Eliminar</button>` 
                             : ''}
                         </div>
                     </div>
@@ -399,7 +529,7 @@
         }
 
         async function deleteDoc(id) {
-            if(!confirm("¿Estás seguro de que deseas eliminar este documento del clúster?")) return;
+            if(!confirm("¿Estás seguro de que deseas eliminar este documento permanentemente del clúster?")) return;
             try {
                 const res = await fetch(`${API_URL}/api/documents/${id}`, {
                     method: 'DELETE',
@@ -410,13 +540,6 @@
             } catch (err) { alert(err.message); }
         }
 
-        function downloadDoc(id) {
-            window.location.href = `${API_URL}/api/download/${id}?token=${token}`; 
-            // Better approach is to fetch as blob if auth is strictly header-based, 
-            // but for simplicity in UI we'll use a direct fetch approach.
-        }
-        
-        // Enhance Download
         async function downloadDoc(id) {
             const res = await fetch(`${API_URL}/api/download/${id}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
@@ -427,8 +550,18 @@
                 const a = document.createElement('a');
                 a.style.display = 'none';
                 a.href = url;
-                // Get filename from header if possible, else default
-                a.download = "document.pdf";
+                a.download = "document.pdf"; // Fallback filename
+                
+                // Intentar extraer el nombre del header
+                const disposition = res.headers.get('Content-Disposition');
+                if (disposition && disposition.indexOf('filename=') !== -1) {
+                    const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+                    const matches = filenameRegex.exec(disposition);
+                    if (matches != null && matches[1]) { 
+                        a.download = matches[1].replace(/['"]/g, '');
+                    }
+                }
+
                 document.body.appendChild(a);
                 a.click();
                 window.URL.revokeObjectURL(url);
